@@ -4,34 +4,22 @@
        <meta charset="UTF-8">
        <meta name="viewport" content="width=device-width, initial-scale=1.0">
        <link rel="stylesheet" href="style.css">
+       <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
        <title>Mertopel</title>
 </head>
 <body>
        <header>
               <h1 class="title">Mertopel</h1>
+              <hr>
+              <nav>
+                     <a id="span" href="pr.html">Basico</a>
+                     <a href="pr2.html">Avançado</a>
+              </nav>
        </header>
        <h2 class="subtitle">Preços e vendas</h2>
        
       <div class="content">
-       <div id="container-produtos">
-              
-              <div class="produto-item" id="produto-1">
-                     <h2>Produto 1:</h2>
-                     <label>Nome do produto:</label>
-                     <input type="text" class="nome-produto">
-                     <label>Preço de compra:</label>
-                     <input type="number" class="preco-compra" step="0.01">
-                     
-                     <label>Lucro desejado (%):</label>
-                     <input type="number" class="lucro-desejado" step="0.01">
-                     
-                     <label>Preço de venda:</label>
-                     <input type="number" class="preco-venda" step="0.01" readonly>
-                     
-                     <button class="btn-calcular" onclick="calculate(1)">Calcular</button>
-              </div>
-
-       </div>
+       <div id="container-produtos"></div>
 
        <br>
        <button id="add-produto" onclick="adicionarProduto()">+ Adicionar Produto</button>
