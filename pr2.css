@@ -1,0 +1,216 @@
+/* Configurações Gerais e Cores Base */
+/* Configurações Gerais e Cores Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+nav {
+    font-size: 15px;
+    margin-top: 15px; /* Dá um espaço entre o título/linha e o menu */
+    margin-bottom: 5px;
+}
+
+a {
+    display: inline-block; /* Garante que o padding e margin funcionem bem */
+    background-color: #6c757d;
+    margin: 3px;
+    padding: 6px 12px; /* Um pouco mais de espaço nas laterais */
+    border-radius: 5px;
+    color: white;
+    border: #000000 solid 1px;
+    text-decoration: none; /* REMOVE O SUBLINHADO DOS LINKS */
+    transition: background-color 0.2s;
+}
+
+a:hover {
+    background-color: #495057; /* Efeito visual ao passar o mouse no menu */
+}
+
+#span {
+    border: 2px #c90000 solid;
+    background-color: #1a1a1a; /* Destaca a aba ativa (Avançado) */
+}
+
+body {
+    background-color: #f8f9fa; 
+    color: #212529; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    min-height: 100vh;
+}
+
+/* Cabeçalho */
+header {
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+    margin-bottom: 25px;
+    border-bottom: 3px solid #e60000; /* Linha vermelha de destaque */
+    padding-bottom: 15px;
+}
+
+.title {
+    font-size: 2.2rem;
+    color: #000000;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 800;
+}
+
+.subtitle {
+    font-size: 1.05rem;
+    color: #6c757d;
+    margin-top: 5px;
+    font-weight: 400;
+}
+
+/* Container dos Produtos */
+.content {
+    width: 100%;
+    max-width: 600px;
+}
+
+/* Bloco de cada Produto */
+.produto-item {
+    background-color: #ffffff; /* Fundo Branco */
+    border: 1px solid #e0e0e0;
+    border-left: 5px solid #1a1a1a; /* Detalhe lateral em preto */
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.produto-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+
+.produto-item h2 {
+    font-size: 1.25rem;
+    color: #e60000; /* Título do produto em Vermelho */
+    margin-bottom: 18px;
+    font-weight: 700;
+}
+
+/* Linha divisória interna */
+hr {
+    border: 0;
+    border-top: 1px solid #eaeaea;
+    margin-bottom: 18px;
+}
+
+/* Formulários e Inputs */
+label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #495057;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* MODIFICADO: Incluído o tipo text para estilizar o Nome do Produto */
+input[type="text"],
+input[type="number"] {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 16px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: #fff;
+    color: #212529;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+    border-color: #e60000; /* Borda vermelha ao clicar no input */
+    box-shadow: 0 0 0 3px rgba(230, 0, 0, 0.15); /* Efeito glow suave */
+    outline: none;
+}
+
+/* Input de leitura (Preço de Venda) */
+input[readonly] {
+    background-color: #f1f3f5;
+    font-weight: bold;
+    color: #1a1a1a;
+    border-color: #ced4da;
+    cursor: not-allowed;
+}
+
+input[readonly]:focus {
+    border-color: #ced4da;
+    box-shadow: none;
+}
+
+/* Container para agrupar e alinhar os botões lado a lado */
+.produto-item .acoes-botoes {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+/* Botões */
+button {
+    flex: 1; /* Faz com que os botões dividam o espaço igualmente */
+    padding: 12px 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background-color 0.15s, transform 0.1s;
+}
+
+button:active {
+    transform: scale(0.97);
+}
+
+/* Botão Calcular */
+.btn-calcular {
+    background-color: #1a1a1a; /* Preto */
+    color: #ffffff;
+}
+
+.btn-calcular:hover {
+    background-color: #2d2d2d;
+}
+
+/* Botão Remover */
+.btn-remover {
+    background-color: #e60000; /* Vermelho */
+    color: #ffffff;
+}
+
+.btn-remover:hover {
+    background-color: #c90000;
+}
+
+/* Botão Adicionar Produto (Geral) */
+#add-produto {
+    width: 100%;
+    background-color: #ffffff;
+    color: #e60000;
+    border: 2px dashed #e60000;
+    padding: 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-top: 10px;
+    border-radius: 8px;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+#add-produto:hover {
+    background-color: #ffebeb;
+}
