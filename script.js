@@ -1,70 +1,182 @@
-// Contador que começa em 1, pois o primeiro já está na tela
-let contadorProdutos = 1;
+// Array global que vai guardar os produtos básicos
+let listaProdutos = [];
+// Objeto global para armazenar as instâncias dos gráficos
+let graficosValores = {};
 
-// Função para adicionar um novo produto na tela
-function adicionarProduto() {
-    contadorProdutos++; // Avança o número do produto (2, 3, 4...)
+// Evento disparado assim que a página carrega
+window.onload = function() {
+    carregarDados();
+};
 
-    // Seleciona o container principal
+// Função para renderizar os produtos na tela com base na listaProdutos
+function renderizarProdutos() {
     const container = document.getElementById('container-produtos');
+    container.innerHTML = ''; // Limpa o container para reconstruir
 
-    // Cria uma nova div para o produto
-    const novoProdutoDiv = document.createElement('div');
-    novoProdutoDiv.classList.add('produto-item');
-    novoProdutoDiv.id = `produto-${contadorProdutos}`;
+    if (listaProdutos.length === 0) {
+        // Inicializa com o Produto 1 padrão caso esteja vazio
+        listaProdutos.push({ id: 1, nome: '', compra: '', lucro: '', venda: '' });
+    }
 
-    // HTML dinâmico com o campo "Nome do produto" adicionado
-    novoProdutoDiv.innerHTML = `
-        <hr> 
-        <h2>Produto ${contadorProdutos}:</h2>
-        
-        <label>Nome do produto:</label>
-        <input type="text" class="nome-produto">
-        
-        <label>Preço de compra:</label>
-        <input type="number" class="preco-compra" step="0.01">
-        
-        <label>Lucro desejado (%):</label>
-        <input type="number" class="lucro-desejado" step="0.01">
-        
-        <label>Preço de venda:</label>
-        <input type="number" class="preco-venda" step="0.01" readonly>
-        
-        <button class="btn-calcular" onclick="calculate(${contadorProdutos})">Calcular</button>
-        <button class="btn-remover" onclick="removerProduto(${contadorProdutos})">Remover</button>
-    `;
+    listaProdutos.forEach((prod, index) => {
+        const novoProdutoDiv = document.createElement('div');
+        novoProdutoDiv.classList.add('produto-item');
+        novoProdutoDiv.id = `produto-${prod.id}`;
 
-    // Adiciona o novo produto dentro do container
-    container.appendChild(novoProdutoDiv);
+        const botaoRemover = index > 0 
+            ? `<button class="btn-remover" onclick="removerProduto(${prod.id})">Remover</button>` 
+            : '';
+
+        novoProdutoDiv.innerHTML = `
+            ${index > 0 ? '<hr>' : ''}
+            <h2>Produto ${prod.id}:</h2>
+            
+            <label>Nome do produto:</label>
+            <input type="text" class="nome-produto" value="${prod.nome}" oninput="atualizarDadosMemoria(${prod.id})">
+            
+            <label>Preço de compra:</label>
+            <input type="number" class="preco-compra" step="0.01" value="${prod.compra}" oninput="atualizarDadosMemoria(${prod.id})">
+            
+            <label>Lucro desejado (%):</label>
+            <input type="number" class="lucro-desejado" step="0.01" value="${prod.lucro}" oninput="atualizarDadosMemoria(${prod.id})">
+            
+            <label>Preço de venda:</label>
+            <input type="number" class="preco-venda" step="0.01" value="${prod.venda}" readonly>
+            
+            <div class="acoes-botoes" style="display: flex; gap: 12px; margin-top: 8px;">
+                <button class="btn-calcular" onclick="calculate(${prod.id})">Calcular</button>
+                ${botaoRemover}
+            </div>
+
+            <div class="container-grafico" style="margin-top: 20px; max-height: 220px; display: none;" id="zona-grafico-${prod.id}">
+                <canvas id="grafico-${prod.id}"></canvas>
+            </div>
+        `;
+
+        container.appendChild(novoProdutoDiv);
+
+        // Se o produto já continha cálculo anterior, monta o gráfico ao iniciar
+        if (prod.venda) {
+            gerarGrafico(prod.id);
+        }
+    });
 }
 
-// Função para remover um produto específico
+// Adiciona um novo produto na lista e redesenha a tela
+function adicionarProduto() {
+    const novoId = listaProdutos.length > 0 ? Math.max(...listaProdutos.map(p => p.id)) + 1 : 1;
+    listaProdutos.push({ id: novoId, nome: '', compra: '', lucro: '', venda: '' });
+    salvarDados();
+    renderizarProdutos();
+}
+
+// Remove o produto da lista e destrói o gráfico correspondente
 function removerProduto(idProduto) {
-    // Busca o bloco do produto pelo ID
+    if (graficosValores[idProduto]) {
+        graficosValores[idProduto].destroy();
+        delete graficosValores[idProduto];
+    }
+    listaProdutos = listaProdutos.filter(p => p.id !== idProduto);
+    salvarDados();
+    renderizarProdutos();
+}
+
+// Salva as inputs que estão sendo digitadas diretamente na memória do Array
+function atualizarDadosMemoria(idProduto) {
     const blocoProduto = document.getElementById(`produto-${idProduto}`);
-    
-    // Se o bloco existir, remove-o da tela
-    if (blocoProduto) {
-        blocoProduto.remove();
+    const produto = listaProdutos.find(p => p.id === idProduto);
+
+    if (produto && blocoProduto) {
+        produto.nome = blocoProduto.querySelector('.nome-produto').value;
+        produto.compra = blocoProduto.querySelector('.preco-compra').value;
+        produto.lucro = blocoProduto.querySelector('.lucro-desejado').value;
+        salvarDados(); // Grava alterações temporárias no LocalStorage
     }
 }
 
-// Função de calcular adaptada para cada produto específico
+// Calcula o preço básico, salva e dispara o gráfico
 function calculate(idProduto) {
     const blocoProduto = document.getElementById(`produto-${idProduto}`);
+    const produto = listaProdutos.find(p => p.id === idProduto);
 
-    const precoCompraInput = blocoProduto.querySelector('.preco-compra');
-    const lucroDesejadoInput = blocoProduto.querySelector('.lucro-desejado');
-    const precoVendaInput = blocoProduto.querySelector('.preco-venda');
+    if (!produto || !blocoProduto) return;
 
-    const precoCompra = parseFloat(precoCompraInput.value);
-    const percentualLucro = parseFloat(lucroDesejadoInput.value);
+    const precoCompra = parseFloat(produto.compra);
+    const percentualLucro = parseFloat(produto.lucro);
     
     if (isNaN(precoCompra) || isNaN(percentualLucro)) {
-        alert(`Por favor, preencha todos os campos do Produto ${idProduto} corretamente.`);
+        alert(`Por favor, preencha todos os campos do produto corretamente.`);
         return;
     }
     
     const precoVenda = precoCompra + (precoCompra * (percentualLucro / 100));
-    precoVendaInput.value = precoVenda.toFixed(2);
+    
+    // Atualiza o objeto e a tela
+    produto.venda = precoVenda.toFixed(2);
+    blocoProduto.querySelector('.preco-venda').value = produto.venda;
+    
+    salvarDados();
+    gerarGrafico(idProduto);
+}
+
+// Cria/Atualiza o gráfico simplificado usando o Chart.js
+function gerarGrafico(idProduto) {
+    const produto = listaProdutos.find(p => p.id === idProduto);
+    if (!produto) return;
+
+    const divGrafico = document.getElementById(`zona-grafico-${idProduto}`);
+    divGrafico.style.display = "block"; // Torna visível
+
+    const ctxCanvas = document.getElementById(`grafico-${idProduto}`).getContext('2d');
+
+    const precoCompra = parseFloat(produto.compra) || 0;
+    const lucroEmDinheiro = (precoCompra * (parseFloat(produto.lucro) / 100)) || 0;
+
+    // Se já havia um gráfico gerado ali, limpa para não sobrepor
+    if (graficosValores[idProduto]) {
+        graficosValores[idProduto].destroy();
+    }
+
+    // Configura o gráfico de rosca (doughnut) integrado à paleta de cores
+    graficosValores[idProduto] = new Chart(ctxCanvas, {
+        type: 'doughnut',
+        data: {
+            labels: ['Preço de Compra', 'Lucro Real'],
+            datasets: [{
+                data: [precoCompra, lucroEmDinheiro],
+                backgroundColor: [
+                    '#1a1a1a', // Preto (Preço de compra)
+                    '#e60000'  // Vermelho Mertopel (Lucro real)
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#212529',
+                        font: { weight: 'bold' }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Salva o Array completo convertido para texto JSON
+function salvarDados() {
+    localStorage.setItem('mertopel_produtos_basicos', JSON.stringify(listaProdutos));
+}
+
+// Puxa o JSON do navegador de volta para o Array
+function carregarDados() {
+    const dadosSalvos = localStorage.getItem('mertopel_produtos_basicos');
+    if (dadosSalvos) {
+        listaProdutos = JSON.parse(dadosSalvos);
+    }
+    renderizarProdutos();
 }
