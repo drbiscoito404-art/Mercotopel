@@ -1,4 +1,5 @@
 /* Configurações Gerais e Cores Base */
+/* Configurações Gerais e Cores Base */
 * {
     margin: 0;
     padding: 0;
@@ -6,16 +7,42 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+nav {
+    font-size: 15px;
+    margin-top: 15px; /* Dá um espaço entre o título/linha e o menu */
+    margin-bottom: 5px;
+}
+
+a {
+    display: inline-block; /* Garante que o padding e margin funcionem bem */
+    background-color: #6c757d;
+    margin: 3px;
+    padding: 6px 12px; /* Um pouco mais de espaço nas laterais */
+    border-radius: 5px;
+    color: white;
+    border: #000000 solid 1px;
+    text-decoration: none; /* REMOVE O SUBLINHADO DOS LINKS */
+    transition: background-color 0.2s;
+}
+
+a:hover {
+    background-color: #495057; /* Efeito visual ao passar o mouse no menu */
+}
+
+#span {
+    border: 2px #c90000 solid;
+    background-color: #1a1a1a; /* Destaca a aba ativa (Avançado) */
+}
+
 body {
-    background-color: #f8f9fa; /* Fundo cinza limpo e moderno */
-    color: #212529; /* Preto suave para os textos */
+    background-color: #f8f9fa; 
+    color: #212529; 
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 40px 20px;
     min-height: 100vh;
 }
-
 /* Cabeçalho */
 header {
     width: 100%;
