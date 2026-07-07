@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+       <meta charset="UTF-8">
+       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <link rel="stylesheet" href="pr2.css">
+       <title>Mertopel</title>
+</head>
+<body>
+       <header>
+              <h1 class="title">Mertopel</h1>
+              <hr>
+              <nav>
+                     <a href="index.html">Basico</a>
+                     <a id="span" href="pr2.html">Avançado</a>
+              </nav>
+       </header>
+       <h2 class="subtitle">Preços e vendas</h2>
+       
+      <div class="content">
+    <div id="container-produtos"></div>
+
+    <br>
+    <button id="add-produto" onclick="adicionarProduto()">+ Adicionar Produto</button>
+</div>
+       <script src="pr2.js"></script>
+       <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>
