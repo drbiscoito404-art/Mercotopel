@@ -15,7 +15,7 @@ function renderizarProdutos() {
 
     if (listaProdutos.length === 0) {
         // Inicializa com o Produto 1 padrão caso esteja vazio
-        listaProdutos.push({ id: 1, nome: '', compra: '', lucro: '', venda: '' });
+        listaProdutos.push({ id: 1, nome: '', compra: '', quantidade: 1, lucro: '', venda: '' });
     }
 
     listaProdutos.forEach((prod, index) => {
@@ -27,6 +27,9 @@ function renderizarProdutos() {
             ? `<button class="btn-remover" onclick="removerProduto(${prod.id})">Remover</button>` 
             : '';
 
+        // Garante que se a quantidade não existir (dados antigos), comece em 1
+        const qtdAtual = prod.quantidade || 1;
+
         novoProdutoDiv.innerHTML = `
             ${index > 0 ? '<hr>' : ''}
             <h2>Produto ${prod.id}:</h2>
@@ -34,13 +37,21 @@ function renderizarProdutos() {
             <label>Nome do produto:</label>
             <input type="text" class="nome-produto" value="${prod.nome}" oninput="atualizarDadosMemoria(${prod.id})">
             
-            <label>Preço de compra:</label>
-            <input type="number" class="preco-compra" step="0.01" value="${prod.compra}" oninput="atualizarDadosMemoria(${prod.id})">
+            <div style="display: flex; gap: 12px;">
+                <div style="flex: 1;">
+                    <label>Preço de compra (Total):</label>
+                    <input type="number" class="preco-compra" step="0.01" value="${prod.compra}" oninput="atualizarDadosMemoria(${prod.id})">
+                </div>
+                <div style="width: 100px;">
+                    <label>Quantidade:</label>
+                    <input type="number" class="quantidade-compra" min="1" value="${qtdAtual}" oninput="atualizarDadosMemoria(${prod.id})">
+                </div>
+            </div>
             
             <label>Lucro desejado (%):</label>
             <input type="number" class="lucro-desejado" step="0.01" value="${prod.lucro}" oninput="atualizarDadosMemoria(${prod.id})">
             
-            <label>Preço de venda:</label>
+            <label>Preço de venda (Unitário):</label>
             <input type="number" class="preco-venda" step="0.01" value="${prod.venda}" readonly>
             
             <div class="acoes-botoes" style="display: flex; gap: 12px; margin-top: 8px;">
@@ -65,7 +76,7 @@ function renderizarProdutos() {
 // Adiciona um novo produto na lista e redesenha a tela
 function adicionarProduto() {
     const novoId = listaProdutos.length > 0 ? Math.max(...listaProdutos.map(p => p.id)) + 1 : 1;
-    listaProdutos.push({ id: novoId, nome: '', compra: '', lucro: '', venda: '' });
+    listaProdutos.push({ id: novoId, nome: '', compra: '', quantidade: 1, lucro: '', venda: '' });
     salvarDados();
     renderizarProdutos();
 }
@@ -89,30 +100,37 @@ function atualizarDadosMemoria(idProduto) {
     if (produto && blocoProduto) {
         produto.nome = blocoProduto.querySelector('.nome-produto').value;
         produto.compra = blocoProduto.querySelector('.preco-compra').value;
+        
+        let qtd = parseInt(blocoProduto.querySelector('.quantidade-compra').value);
+        produto.quantidade = isNaN(qtd) || qtd < 1 ? 1 : qtd; // Evita valores inválidos ou zero
+        
         produto.lucro = blocoProduto.querySelector('.lucro-desejado').value;
         salvarDados(); // Grava alterações temporárias no LocalStorage
     }
 }
 
-// Calcula o preço básico, salva e dispara o gráfico
+// Calcula o preço básico baseado na unidade, salva e dispara o gráfico
 function calculate(idProduto) {
     const blocoProduto = document.getElementById(`produto-${idProduto}`);
     const produto = listaProdutos.find(p => p.id === idProduto);
 
     if (!produto || !blocoProduto) return;
 
-    const precoCompra = parseFloat(produto.compra);
+    const precoCompraTotal = parseFloat(produto.compra);
+    const quantidade = parseInt(produto.quantidade) || 1;
     const percentualLucro = parseFloat(produto.lucro);
     
-    if (isNaN(precoCompra) || isNaN(percentualLucro)) {
+    if (isNaN(precoCompraTotal) || isNaN(percentualLucro)) {
         alert(`Por favor, preencha todos os campos do produto corretamente.`);
         return;
     }
     
-    const precoVenda = precoCompra + (precoCompra * (percentualLucro / 100));
+    // Calcula o preço de compra por unidade antes de aplicar o lucro
+    const precoCompraUnitario = precoCompraTotal / quantidade;
+    const precoVendaUnitario = precoCompraUnitario + (precoCompraUnitario * (percentualLucro / 100));
     
     // Atualiza o objeto e a tela
-    produto.venda = precoVenda.toFixed(2);
+    produto.venda = precoVendaUnitario.toFixed(2);
     blocoProduto.querySelector('.preco-venda').value = produto.venda;
     
     salvarDados();
@@ -129,8 +147,12 @@ function gerarGrafico(idProduto) {
 
     const ctxCanvas = document.getElementById(`grafico-${idProduto}`).getContext('2d');
 
-    const precoCompra = parseFloat(produto.compra) || 0;
-    const lucroEmDinheiro = (precoCompra * (parseFloat(produto.lucro) / 100)) || 0;
+    const precoCompraTotal = parseFloat(produto.compra) || 0;
+    const quantidade = parseInt(produto.quantidade) || 1;
+    
+    // Gráfico agora reflete os valores baseados na unidade
+    const precoCompraUnitario = precoCompraTotal / quantidade;
+    const lucroEmDinheiroUnitario = (precoCompraUnitario * (parseFloat(produto.lucro) / 100)) || 0;
 
     // Se já havia um gráfico gerado ali, limpa para não sobrepor
     if (graficosValores[idProduto]) {
@@ -141,12 +163,12 @@ function gerarGrafico(idProduto) {
     graficosValores[idProduto] = new Chart(ctxCanvas, {
         type: 'doughnut',
         data: {
-            labels: ['Preço de Compra', 'Lucro Real'],
+            labels: ['Custo Unitário', 'Lucro Unitário'],
             datasets: [{
-                data: [precoCompra, lucroEmDinheiro],
+                data: [precoCompraUnitario, lucroEmDinheiroUnitario],
                 backgroundColor: [
-                    '#1a1a1a', // Preto (Preço de compra)
-                    '#e60000'  // Vermelho Mertopel (Lucro real)
+                    '#1a1a1a', // Preto (Preço de compra unitário)
+                    '#e60000'  // Vermelho Mertopel (Lucro unitário)
                 ],
                 borderWidth: 1
             }]
