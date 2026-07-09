@@ -14,7 +14,7 @@ function renderizarProdutos() {
     container.innerHTML = ''; // Limpa o container para recriar do zero
 
     if (listaProdutos.length === 0) {
-        listaProdutos.push({ id: 1, nome: '', compra: '', fabricacao: '', frete: '', lucro: '', venda: '' });
+        listaProdutos.push({ id: 1, nome: '', compra: '', quantidade: 1, fabricacao: '', frete: '', lucro: '', venda: '' });
     }
 
     listaProdutos.forEach((prod, index) => {
@@ -26,6 +26,9 @@ function renderizarProdutos() {
             ? `<button class="btn-remover" onclick="removerProduto(${prod.id})">Remover</button>` 
             : '';
 
+        // Garante que se a quantidade não existir (dados antigos), comece em 1
+        const qtdAtual = prod.quantidade || 1;
+
         novoProdutoDiv.innerHTML = `
             ${index > 0 ? '<hr>' : ''}
             <h2>Produto ${prod.id}:</h2>
@@ -33,19 +36,27 @@ function renderizarProdutos() {
             <label>Nome do produto:</label>
             <input type="text" class="nome-produto" value="${prod.nome}" oninput="atualizarDadosMemoria(${prod.id})">
             
-            <label>Valor de itens comprado:</label>
-            <input type="number" class="preco-compra" step="0.01" value="${prod.compra}" oninput="atualizarDadosMemoria(${prod.id})">
+            <div style="display: flex; gap: 12px;">
+                <div style="flex: 1;">
+                    <label>Valor de itens comprado (Total):</label>
+                    <input type="number" class="preco-compra" step="0.01" value="${prod.compra}" oninput="atualizarDadosMemoria(${prod.id})">
+                </div>
+                <div style="width: 100px;">
+                    <label>Quantidade:</label>
+                    <input type="number" class="quantidade-compra" min="1" value="${qtdAtual}" oninput="atualizarDadosMemoria(${prod.id})">
+                </div>
+            </div>
             
-            <label>Custo de fabricação:</label>
+            <label>Custo de fabricação (Total):</label>
             <input type="number" class="custo-fabricacao" step="0.01" value="${prod.fabricacao}" oninput="atualizarDadosMemoria(${prod.id})">
 
-            <label>Valor do frete:</label>
+            <label>Valor do frete (Total):</label>
             <input type="number" class="valor-frete" step="0.01" value="${prod.frete}" oninput="atualizarDadosMemoria(${prod.id})">
             
             <label>Lucro desejado (%):</label>
             <input type="number" class="lucro-desejado" step="0.01" value="${prod.lucro}" oninput="atualizarDadosMemoria(${prod.id})">
 
-            <label>Preço de venda:</label>
+            <label>Preço de venda (Unitário):</label>
             <input type="number" class="preco-venda" step="0.01" value="${prod.venda}" readonly>
             
             <div class="acoes-botoes">
@@ -70,7 +81,7 @@ function renderizarProdutos() {
 // Adiciona um novo produto na lista e atualiza a tela
 function adicionarProduto() {
     const novoId = listaProdutos.length > 0 ? Math.max(...listaProdutos.map(p => p.id)) + 1 : 1;
-    listaProdutos.push({ id: novoId, nome: '', compra: '', fabricacao: '', frete: '', lucro: '', venda: '' });
+    listaProdutos.push({ id: novoId, nome: '', compra: '', quantidade: 1, fabricacao: '', frete: '', lucro: '', venda: '' });
     salvarDados();
     renderizarProdutos();
 }
@@ -94,6 +105,10 @@ function atualizarDadosMemoria(idProduto) {
     if (produto && blocoProduto) {
         produto.nome = blocoProduto.querySelector('.nome-produto').value;
         produto.compra = blocoProduto.querySelector('.preco-compra').value;
+        
+        let qtd = parseInt(blocoProduto.querySelector('.quantidade-compra').value);
+        produto.quantidade = isNaN(qtd) || qtd < 1 ? 1 : qtd; // Proteção contra valores nulos/menores que 1
+        
         produto.fabricacao = blocoProduto.querySelector('.custo-fabricacao').value;
         produto.frete = blocoProduto.querySelector('.valor-frete').value;
         produto.lucro = blocoProduto.querySelector('.lucro-desejado').value;
@@ -101,27 +116,33 @@ function atualizarDadosMemoria(idProduto) {
     }
 }
 
-// Calcula o valor, salva o resultado final e dispara o gráfico
+// Calcula o valor unitário, salva o resultado final e dispara o gráfico
 function calculate(idProduto) {
     const blocoProduto = document.getElementById(`produto-${idProduto}`);
     const produto = listaProdutos.find(p => p.id === idProduto);
 
     if (!produto || !blocoProduto) return;
 
-    const precoCompra = parseFloat(produto.compra) || 0;
-    const custoFabricacao = parseFloat(produto.fabricacao) || 0;
-    const valorFrete = parseFloat(produto.frete) || 0;
+    const precoCompraTotal = parseFloat(produto.compra) || 0;
+    const custoFabricacaoTotal = parseFloat(produto.fabricacao) || 0;
+    const valorFreteTotal = parseFloat(produto.frete) || 0;
     const percentualLucro = parseFloat(produto.lucro) || 0;
+    const quantidade = parseInt(produto.quantidade) || 1;
     
-    if (precoCompra === 0 && custoFabricacao === 0) {
+    if (precoCompraTotal === 0 && custoFabricacaoTotal === 0) {
         alert(`Por favor, insira os valores de custo.`);
         return;
     }
     
-    const custoTotal = precoCompra + custoFabricacao + valorFrete;
-    const precoVenda = custoTotal + (custoTotal * (percentualLucro / 100));
+    // Transforma os custos totais informados em custos por unidade
+    const compraUnitario = precoCompraTotal / quantidade;
+    const fabricacaoUnitario = custoFabricacaoTotal / quantidade;
+    const freteUnitario = valorFreteTotal / quantidade;
+
+    const custoTotalUnitario = compraUnitario + fabricacaoUnitario + freteUnitario;
+    const precoVendaUnitario = custoTotalUnitario + (custoTotalUnitario * (percentualLucro / 100));
     
-    produto.venda = precoVenda.toFixed(2);
+    produto.venda = precoVendaUnitario.toFixed(2);
     blocoProduto.querySelector('.preco-venda').value = produto.venda;
     
     salvarDados();
@@ -138,28 +159,33 @@ function gerarGrafico(idProduto) {
     const divGrafico = document.getElementById(`zona-grafico-${idProduto}`);
     divGrafico.style.display = "block"; // Torna o gráfico visível
 
-    const ctx = document.getElementById(`grafico-${idProduto}`).getContext('2结尾d');
     const ctxCanvas = document.getElementById(`grafico-${idProduto}`).getContext('2d');
 
-    const precoCompra = parseFloat(produto.compra) || 0;
-    const custoFabricacao = parseFloat(produto.fabricacao) || 0;
-    const valorFrete = parseFloat(produto.frete) || 0;
+    const precoCompraTotal = parseFloat(produto.compra) || 0;
+    const custoFabricacaoTotal = parseFloat(produto.fabricacao) || 0;
+    const valorFreteTotal = parseFloat(produto.frete) || 0;
+    const quantidade = parseInt(produto.quantidade) || 1;
     
-    const custoTotal = precoCompra + custoFabricacao + valorFrete;
-    const lucroEmDinheiro = (custoTotal * (parseFloat(produto.lucro) / 100)) || 0;
+    // Divide os valores para que o gráfico exiba o peso de cada custo por unidade
+    const compraUnitario = precoCompraTotal / quantidade;
+    const fabricacaoUnitario = custoFabricacaoTotal / quantidade;
+    const freteUnitario = valorFreteTotal / quantidade;
+    
+    const custoTotalUnitario = compraUnitario + fabricacaoUnitario + freteUnitario;
+    const lucroEmDinheiroUnitario = (custoTotalUnitario * (parseFloat(produto.lucro) / 100)) || 0;
 
     // Se o gráfico já existia nesse produto, destrói para criar o novo atualizado
     if (graficosValores[idProduto]) {
         graficosValores[idProduto].destroy();
     }
 
-    // Cria o gráfico de pizza (doughnut) estilizado nas cores do seu projeto
+    // Cria o gráfico de pizza (doughnut) estilizado focado nos valores unitários
     graficosValores[idProduto] = new Chart(ctxCanvas, {
         type: 'doughnut',
         data: {
-            labels: ['Compra', 'Fabricação', 'Frete', 'Lucro Real'],
+            labels: ['Compra (Unit.)', 'Fabricação (Unit.)', 'Frete (Unit.)', 'Lucro Real (Unit.)'],
             datasets: [{
-                data: [precoCompra, custoFabricacao, valorFrete, lucroEmDinheiro],
+                data: [compraUnitario, fabricacaoUnitario, freteUnitario, lucroEmDinheiroUnitario],
                 backgroundColor: [
                     '#495057', // Cinza escuro (Compra)
                     '#1a1a1a', // Preto (Fabricação)
